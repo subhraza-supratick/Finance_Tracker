@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Tracker — {{ user_name }}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            margin: 20px 0;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .card-custom {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card-custom:hover {
+            transform: translateY(-5px);
+        }
+        
+        .btn-custom {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+        
+        .income-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .expense-card {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
+        .balance-card {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #333;
+        }
+        
+        .transaction-item {
+            border-left: 4px solid;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 10px 10px 0;
+            background: white;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .income-border { border-left-color: #28a745; }
+        .expense-border { border-left-color: #dc3545; }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .alert-custom {
+            border-radius: 10px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-10">
+                <div class="main-container">
+                    <!-- Navigation -->
+                    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+                        <div class="container-fluid">
+                            <a class="navbar-brand fw-bold fs-3" href="#">
+                                <i class="fas fa-chart-line me-2"></i>Finance Tracker
+                            </a>
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+                            <div class="collapse navbar-collapse" id="navbarNav">
+                                <ul class="navbar-nav ms-auto align-items-center">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="#dashboard">Dashboard</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="#transactions">Transactions</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="#reports">Reports</a>
+                                    </li>
+                                    <li class="nav-item ms-3">
+                                        <span class="navbar-text text-white me-2">
+                                            <i class="fas fa-user-circle me-1"></i>{{ user_name }}
+                                        </span>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="btn btn-sm btn-outline-light rounded-pill px-3" href="/logout">
+                                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <!-- Dashboard Section -->
+                    <div id="dashboard" class="p-4">
+                        <h2 class="mb-4"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+                        
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-3 mb-3">
+                                <div class="card card-custom stats-card income-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-arrow-up fa-2x mb-2"></i>
+                                        <h5>Total Income</h5>
+                                        <h3 id="totalIncome">$0.00</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card card-custom stats-card expense-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-arrow-down fa-2x mb-2"></i>
+                                        <h5>Total Expenses</h5>
+                                        <h3 id="totalExpenses">$0.00</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card card-custom stats-card balance-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-wallet fa-2x mb-2"></i>
+                                        <h5>Balance</h5>
+                                        <h3 id="balance">$0.00</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card card-custom stats-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-calendar fa-2x mb-2"></i>
+                                        <h5>This Month</h5>
+                                        <h3 id="monthlyBalance">$0.00</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Add Transaction Form -->
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="card card-custom">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0"><i class="fas fa-plus me-2"></i>Add Transaction</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="transactionForm">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">Type</label>
+                                                    <select class="form-select" id="transactionType" required>
+                                                        <option value="">Select Type</option>
+                                                        <option value="income">Income</option>
+                                                        <option value="expense">Expense</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">Amount</label>
+                                                    <input type="number" class="form-control" id="amount" step="0.01" required>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Category</label>
+                                                <select class="form-select" id="category" required>
+                                                    <option value="">Select Category</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Description</label>
+                                                <input type="text" class="form-control" id="description" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Date</label>
+                                                <input type="date" class="form-control" id="transactionDate" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-custom w-100">
+                                                <i class="fas fa-save me-2"></i>Add Transaction
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Chart -->
+                            <div class="col-lg-6">
+                                <div class="card card-custom">
+                                    <div class="card-header bg-info text-white">
+                                        <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Expense Categories</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="expenseChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transactions Section -->
+                    <div id="transactions" class="p-4" style="display: none;">
+                        <h2 class="mb-4"><i class="fas fa-list me-2"></i>Transaction History</h2>
+                        
+                        <!-- Filters -->
+                        <div class="card card-custom mb-4">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <select class="form-select" id="filterType">
+                                            <option value="">All Types</option>
+                                            <option value="income">Income</option>
+                                            <option value="expense">Expense</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select" id="filterCategory">
+                                            <option value="">All Categories</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="date" class="form-control" id="filterDate">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-primary btn-custom" onclick="clearFilters()">
+                                            <i class="fas fa-filter me-2"></i>Clear Filters
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Transactions List -->
+                        <div id="transactionsList"></div>
+                        
+                        <!-- Pagination -->
+                        <nav aria-label="Transactions pagination">
+                            <ul class="pagination justify-content-center" id="pagination"></ul>
+                        </nav>
+                    </div>
+
+                    <!-- Reports Section -->
+                    <div id="reports" class="p-4" style="display: none;">
+                        <h2 class="mb-4"><i class="fas fa-chart-bar me-2"></i>Financial Reports</h2>
+                        
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="card card-custom">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0">Monthly Trends</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="monthlyChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="card card-custom">
+                                    <div class="card-header bg-warning text-white">
+                                        <h5 class="mb-0">Category Breakdown</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="categoryChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading" id="loading">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast" id="successToast" role="alert">
+            <div class="toast-header">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <strong class="me-auto">Success</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="successMessage"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        // Application State
+        let transactions = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        
+        // Categories
+        const categories = {
+            income: ['Salary', 'Freelance', 'Investment', 'Gift', 'Other Income'],
+            expense: ['Food', 'Transportation', 'Entertainment', 'Bills', 'Shopping', 'Healthcare', 'Other Expense']
+        };
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+            loadTransactions();
+        });
+
+        function initializeApp() {
+            // Set today's date as default
+            document.getElementById('transactionDate').valueAsDate = new Date();
+            
+            // Initialize navigation
+            setupNavigation();
+        }
+
+        function setupEventListeners() {
+            // Form submission
+            document.getElementById('transactionForm').addEventListener('submit', addTransaction);
+            
+            // Transaction type change
+            document.getElementById('transactionType').addEventListener('change', updateCategories);
+            
+            // Filter changes
+            document.getElementById('filterType').addEventListener('change', filterTransactions);
+            document.getElementById('filterCategory').addEventListener('change', filterTransactions);
+            document.getElementById('filterDate').addEventListener('change', filterTransactions);
+        }
+
+        function setupNavigation() {
+            const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = this.getAttribute('href').substring(1);
+                    showSection(target);
+                });
+            });
+        }
+
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = ['dashboard', 'transactions', 'reports'];
+            sections.forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+            
+            // Show target section
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Load section-specific data
+            if (sectionId === 'transactions') {
+                displayTransactions();
+            } else if (sectionId === 'reports') {
+                generateReports();
+            }
+        }
+
+        function updateCategories() {
+            const type = document.getElementById('transactionType').value;
+            const categorySelect = document.getElementById('category');
+            const filterCategorySelect = document.getElementById('filterCategory');
+            
+            // Clear existing options
+            categorySelect.innerHTML = '<option value="">Select Category</option>';
+            
+            if (type && categories[type]) {
+                categories[type].forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    categorySelect.appendChild(option);
+                });
+            }
+            
+            // Update filter categories
+            updateFilterCategories();
+        }
+
+        function updateFilterCategories() {
+            const filterCategorySelect = document.getElementById('filterCategory');
+            filterCategorySelect.innerHTML = '<option value="">All Categories</option>';
+            
+            const allCategories = [...categories.income, ...categories.expense];
+            allCategories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                filterCategorySelect.appendChild(option);
+            });
+        }
+
+async function addTransaction(e) {
+            e.preventDefault();
+            
+            const formData = {
+                type: document.getElementById('transactionType').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                category: document.getElementById('category').value,
+                description: document.getElementById('description').value,
+                date: document.getElementById('transactionDate').value
+            };
+
+            try {
+                showLoading(true);
+                
+                // Simulate API call (replace with actual Flask API call)
+                const response = await fetch('/api/transactions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Add transaction response:', data);
+                    
+                    // Reset form
+                    document.getElementById('transactionForm').reset();
+                    document.getElementById('transactionDate').valueAsDate = new Date();
+                    
+                    if (Array.isArray(data)) {
+                        // If backend returns full list, replace transactions
+                        transactions = data;
+                    } else if (data && data.id) {
+                        // If backend returns new transaction, add to transactions
+                        transactions.unshift(data);
+                    } else {
+                        // Fallback: reload transactions
+                        await loadTransactions();
+                    }
+                    console.log('Transactions after add:', transactions.length);
+                    
+                    updateDashboard();
+                    displayTransactions();
+                    showToast('Transaction added successfully!');
+                } else {
+                    throw new Error('Failed to add transaction');
+                }
+                } catch (error) {
+                    console.error('Error adding transaction:', error);
+                    // For demo purposes, add locally
+                    transactions.unshift({
+                        ...formData,
+                        id: Date.now(),
+                        amount: parseFloat(formData.amount),
+                        date: new Date(formData.date)
+                    });
+                    
+                    document.getElementById('transactionForm').reset();
+                    document.getElementById('transactionDate').valueAsDate = new Date();
+                    updateDashboard();
+                    displayTransactions();
+                    showToast('Transaction added successfully!');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+        async function loadTransactions() {
+            try {
+                showLoading(true);
+                const response = await fetch('/api/transactions');
+                if (response.ok) {
+                    const data = await response.json();
+                    transactions = data.transactions;
+                } else {
+                    transactions = [];
+                }
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                transactions = [];
+            } finally {
+                showLoading(false);
+                updateDashboard();
+            }
+        }
+
+
+
+        function updateDashboard() {
+            const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const balance = income - expenses;
+            
+            // Get current month transactions
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlyTransactions = transactions.filter(t => {
+                const tDate = new Date(t.date);
+                return tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear;
+            });
+            const monthlyIncome = monthlyTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const monthlyExpenses = monthlyTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const monthlyBalance = monthlyIncome - monthlyExpenses;
+
+            // Update UI
+            document.getElementById('totalIncome').textContent = `$${income.toFixed(2)}`;
+            document.getElementById('totalExpenses').textContent = `$${expenses.toFixed(2)}`;
+            document.getElementById('balance').textContent = `$${balance.toFixed(2)}`;
+            document.getElementById('monthlyBalance').textContent = `$${monthlyBalance.toFixed(2)}`;
+            
+            // Update charts
+            updateExpenseChart();
+        }
+
+        let expenseChartInstance = null;
+
+        function updateExpenseChart() {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            const expenses = transactions.filter(t => t.type === 'expense');
+            
+            const categoryTotals = {};
+            expenses.forEach(t => {
+                categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+            });
+
+            if (expenseChartInstance) {
+                expenseChartInstance.destroy();
+            }
+
+            expenseChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categoryTotals),
+                    datasets: [{
+                        data: Object.values(categoryTotals),
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                            '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function displayTransactions() {
+            const container = document.getElementById('transactionsList');
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedTransactions = transactions.slice(startIndex, endIndex);
+
+            container.innerHTML = '';
+
+            paginatedTransactions.forEach(transaction => {
+                const transactionElement = document.createElement('div');
+                transactionElement.className = `transaction-item ${transaction.type}-border`;
+                transactionElement.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${transaction.description}</h6>
+                            <small class="text-muted">${transaction.category} • ${new Date(transaction.date).toLocaleDateString()}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge ${transaction.type === 'income' ? 'bg-success' : 'bg-danger'} fs-6">
+                                ${transaction.type === 'income' ? '+' : '-'}$${transaction.amount.toFixed(2)}
+                            </span>
+                            <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteTransaction(${transaction.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(transactionElement);
+            });
+
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(transactions.length / itemsPerPage);
+            const paginationContainer = document.getElementById('pagination');
+            
+            paginationContainer.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageItem = document.createElement('li');
+                pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                pageItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+                paginationContainer.appendChild(pageItem);
+            }
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            displayTransactions();
+        }
+
+        async function deleteTransaction(id) {
+            if (confirm('Are you sure you want to delete this transaction?')) {
+                try {
+                    const response = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        transactions = transactions.filter(t => t.id !== id);
+                        updateDashboard();
+                        displayTransactions();
+                        showToast('Transaction deleted successfully!');
+                    } else {
+                        showToast('Failed to delete transaction.');
+                    }
+                } catch (error) {
+                    console.error('Delete error:', error);
+                }
+            }
+        }
+
+        function filterTransactions() {
+            const typeFilter = document.getElementById('filterType').value;
+            const categoryFilter = document.getElementById('filterCategory').value;
+            const dateFilter = document.getElementById('filterDate').value;
+
+            let filtered = [...transactions];
+
+            if (typeFilter) {
+                filtered = filtered.filter(t => t.type === typeFilter);
+            }
+
+            if (categoryFilter) {
+                filtered = filtered.filter(t => t.category === categoryFilter);
+            }
+
+            if (dateFilter) {
+                filtered = filtered.filter(t => {
+                    const transactionDate = new Date(t.date).toISOString().split('T')[0];
+                    return transactionDate === dateFilter;
+                });
+            }
+
+            // Temporarily update transactions for display
+            const originalTransactions = [...transactions];
+            transactions = filtered;
+            currentPage = 1;
+            displayTransactions();
+            transactions = originalTransactions;
+        }
+
+        function clearFilters() {
+            document.getElementById('filterType').value = '';
+            document.getElementById('filterCategory').value = '';
+            document.getElementById('filterDate').value = '';
+            currentPage = 1;
+            displayTransactions();
+        }
+
+        function generateReports() {
+            generateMonthlyChart();
+            generateCategoryChart();
+        }
+
+        function generateMonthlyChart() {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            
+            // Group transactions by month
+            const monthlyData = {};
+            transactions.forEach(t => {
+                const monthKey = new Date(t.date).toISOString().slice(0, 7);
+                if (!monthlyData[monthKey]) {
+                    monthlyData[monthKey] = { income: 0, expense: 0 };
+                }
+                monthlyData[monthKey][t.type] += t.amount;
+            });
+
+            const labels = Object.keys(monthlyData).sort();
+            const incomeData = labels.map(label => monthlyData[label].income);
+            const expenseData = labels.map(label => monthlyData[label].expense);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Income',
+                            data: incomeData,
+                            backgroundColor: '#4facfe'
+                        },
+                        {
+                            label: 'Expenses',
+                            data: expenseData,
+                            backgroundColor: '#fa709a'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function generateCategoryChart() {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            
+            const categoryTotals = {};
+            transactions.forEach(t => {
+                categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+            });
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(categoryTotals),
+                    datasets: [{
+                        label: 'Amount',
+                        data: Object.values(categoryTotals),
+                        backgroundColor: '#667eea'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y'
+                }
+            });
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showToast(message) {
+            document.getElementById('successMessage').textContent = message;
+            const toast = new bootstrap.Toast(document.getElementById('successToast'));
+            toast.show();
+        }
+
+        // Initialize categories on load
+        updateFilterCategories();
+    </script>
+</body>
+</html>

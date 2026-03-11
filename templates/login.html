@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Finance Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .brand-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 8px 24px rgba(79, 172, 254, 0.4);
+        }
+
+        .auth-title {
+            color: #ffffff;
+            font-size: 1.75rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .auth-subtitle {
+            color: rgba(255,255,255,0.5);
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 32px;
+        }
+
+        .form-label {
+            color: rgba(255,255,255,0.75);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            color: #ffffff;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: rgba(255,255,255,0.12);
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2);
+            color: #ffffff;
+        }
+
+        .form-control::placeholder { color: rgba(255,255,255,0.3); }
+
+        .input-icon-wrapper {
+            position: relative;
+        }
+
+        .input-icon-wrapper .icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.4);
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .input-icon-wrapper .form-control {
+            padding-left: 40px;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 13px;
+            width: 100%;
+            margin-top: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.35);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.5);
+            color: #fff;
+        }
+
+        .btn-login:active { transform: translateY(0); }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 28px;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.88rem;
+        }
+
+        .auth-footer a {
+            color: #4facfe;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-footer a:hover { text-decoration: underline; }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            font-size: 0.875rem;
+            padding: 12px 16px;
+        }
+
+        .alert-danger { background: rgba(220,53,69,0.2); color: #ff6b7a; }
+        .alert-success { background: rgba(40,167,69,0.2); color: #69db7c; }
+        .alert-info { background: rgba(23,162,184,0.2); color: #4dd8eb; }
+
+        .divider {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin: 24px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <div class="brand-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-subtitle">Sign in to your Finance Tracker</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} mb-3" role="alert">
+                        <i class="fas fa-{{ 'check-circle' if category == 'success' else 'info-circle' if category == 'info' else 'exclamation-circle' }} me-2"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/login" novalidate>
+            <div class="mb-3">
+                <label class="form-label" for="email">Email Address</label>
+                <div class="input-icon-wrapper">
+                    <i class="fas fa-envelope icon"></i>
+                    <input
+                        type="email"
+                        class="form-control"
+                        id="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label" for="password">Password</label>
+                <div class="input-icon-wrapper">
+                    <i class="fas fa-lock icon"></i>
+                    <input
+                        type="password"
+                        class="form-control"
+                        id="password"
+                        name="password"
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+            </div>
+            <button type="submit" class="btn btn-login">
+                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+            </button>
+        </form>
+
+        <div class="divider"></div>
+
+        <div class="auth-footer">
+            Don't have an account? <a href="/register">Create one</a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
